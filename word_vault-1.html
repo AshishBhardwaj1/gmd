@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Word Vault — Vocabulary Learning</title>
+<style>
+:root{
+  --bg:#f5f7fb;--card:#fff;--text:#172033;--muted:#697386;
+  --primary:#5b5cf0;--primary2:#7c3aed;--border:#e5e7eb;
+  --success:#16a34a;--shadow:0 14px 40px rgba(20,28,55,.09);
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:linear-gradient(135deg,#f7f8ff,#eef7ff);color:var(--text)}
+button,input{font:inherit}
+button{cursor:pointer}
+.app{max-width:1180px;margin:auto;padding:24px}
+.hero{background:linear-gradient(135deg,#171a38,#4936a8 58%,#6d4aff);color:white;border-radius:28px;padding:30px;box-shadow:var(--shadow);position:relative;overflow:hidden}
+.hero:after{content:"";position:absolute;width:260px;height:260px;border-radius:50%;right:-90px;top:-100px;background:rgba(255,255,255,.1)}
+.brand{display:flex;justify-content:space-between;align-items:center;gap:20px;position:relative;z-index:1}
+h1{font-size:clamp(28px,5vw,46px);margin:0 0 8px;letter-spacing:-1.5px}
+.hero p{margin:0;color:#dfe2ff;max-width:700px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:24px;position:relative;z-index:1}
+.stat{background:rgba(255,255,255,.11);border:1px solid rgba(255,255,255,.15);border-radius:17px;padding:15px}
+.stat b{font-size:24px;display:block}.stat span{font-size:12px;color:#d7d9ef}
+.controls{margin:22px 0;display:flex;flex-wrap:wrap;gap:10px}
+.search{flex:1 1 300px;position:relative}
+.search input{width:100%;padding:14px 16px 14px 44px;border:1px solid var(--border);border-radius:15px;background:white;outline:none;box-shadow:0 5px 18px rgba(20,28,55,.04)}
+.search input:focus{border-color:var(--primary);box-shadow:0 0 0 4px rgba(91,92,240,.1)}
+.search span{position:absolute;left:15px;top:11px;font-size:20px}
+.select,.action{border:1px solid var(--border);background:white;border-radius:14px;padding:12px 15px;color:var(--text)}
+.action{font-weight:700;transition:.2s}.action:hover{transform:translateY(-1px);box-shadow:0 8px 18px rgba(20,28,55,.08)}
+.primary{background:var(--primary);color:white;border-color:var(--primary)}
+.filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px}
+.chip{border:1px solid var(--border);background:#fff;padding:8px 13px;border-radius:999px;font-size:13px;color:var(--muted)}
+.chip.active{background:#ececff;color:var(--primary);border-color:#c9caff;font-weight:700}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:17px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:22px;padding:20px;box-shadow:0 8px 28px rgba(20,28,55,.055);transition:.25s;min-height:230px;display:flex;flex-direction:column}
+.card:hover{transform:translateY(-4px);box-shadow:var(--shadow)}
+.card-top{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.number{font-size:12px;color:var(--muted);font-weight:700}
+.badge{font-size:11px;background:#f0efff;color:var(--primary);padding:6px 9px;border-radius:999px;font-weight:700}
+.word{font-size:28px;font-weight:850;margin:20px 0 6px;letter-spacing:-.7px}
+.prompt{color:var(--muted);font-size:13px;min-height:38px}
+.answer{margin-top:15px;padding:13px;border-radius:14px;background:#f7f8fc;border:1px dashed #d8dce8;line-height:1.55;font-size:14px;display:none}
+.answer.show{display:block;animation:fade .25s ease}
+@keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.card-bottom{margin-top:auto;display:flex;gap:8px}
+.card-bottom button{flex:1;padding:10px;border-radius:12px;border:1px solid var(--border);background:#fff;font-weight:700}
+.card-bottom .reveal{background:#171a38;color:#fff;border-color:#171a38}
+.empty{grid-column:1/-1;text-align:center;padding:60px;background:white;border:1px dashed var(--border);border-radius:22px;color:var(--muted)}
+.progress-wrap{margin:20px 0 8px}
+.progress-line{height:9px;background:#e8eaf1;border-radius:99px;overflow:hidden}
+.progress{height:100%;width:0;background:linear-gradient(90deg,var(--primary),var(--primary2));transition:.3s}
+.progress-text{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-bottom:7px}
+.modal{position:fixed;inset:0;background:rgba(10,14,30,.62);display:none;align-items:center;justify-content:center;padding:20px;z-index:10}
+.modal.open{display:flex}
+.modal-box{background:#fff;width:min(560px,100%);border-radius:25px;padding:25px;box-shadow:0 25px 80px rgba(0,0,0,.25)}
+.modal-head{display:flex;justify-content:space-between;align-items:center}.close{border:0;background:#f1f2f6;border-radius:50%;width:38px;height:38px}
+.quiz-word{font-size:44px;font-weight:900;text-align:center;margin:30px 0 8px}
+.quiz-hint{text-align:center;color:var(--muted);margin-bottom:20px}
+.quiz-answer{width:100%;padding:14px;border:1px solid var(--border);border-radius:14px;font-size:15px;outline:none}
+.quiz-actions{display:flex;gap:10px;margin-top:12px}.quiz-actions button{flex:1;padding:13px;border-radius:13px;border:0;font-weight:800}
+.correct{background:#dcfce7;color:#166534}.skip{background:#f1f2f6}
+.footer{text-align:center;color:var(--muted);font-size:12px;padding:28px 0}
+@media(max-width:600px){.app{padding:13px}.hero{padding:22px;border-radius:22px}.stats{grid-template-columns:1fr}.grid{grid-template-columns:1fr}.word{font-size:25px}}
+</style>
+</head>
+<body>
+<div class="app">
+  <section class="hero">
+    <div class="brand">
+      <div>
+        <h1>Word Vault</h1>
+        <p>A smart vocabulary deck for learning words, clues, meanings and categories.</p>
+      </div>
+      <div style="font-size:42px">📚</div>
+    </div>
+    <div class="stats">
+      <div class="stat"><b id="totalStat">30</b><span>Total words</span></div>
+      <div class="stat"><b id="seenStat">0</b><span>Answers revealed</span></div>
+      <div class="stat"><b id="remainingStat">30</b><span>Still to learn</span></div>
+    </div>
+  </section>
+
+  <div class="controls">
+    <div class="search"><span>⌕</span><input id="search" placeholder="Search a word, category or meaning..."></div>
+    <select id="sort" class="select">
+      <option value="default">Original order</option>
+      <option value="az">A → Z</option>
+      <option value="za">Z → A</option>
+    </select>
+    <button class="action primary" id="quizBtn">🎯 Quiz Mode</button>
+    <button class="action" id="resetBtn">↺ Reset</button>
+  </div>
+
+  <div class="filters" id="filters"></div>
+
+  <div class="progress-wrap">
+    <div class="progress-text"><span>Learning progress</span><span id="progressText">0 / 30</span></div>
+    <div class="progress-line"><div class="progress" id="progress"></div></div>
+  </div>
+
+  <main class="grid" id="grid"></main>
+  <div class="footer">Word Vault • Single-file HTML • Works offline</div>
+</div>
+
+<div class="modal" id="modal">
+  <div class="modal-box">
+    <div class="modal-head"><h2 style="margin:0">🎯 Quiz Mode</h2><button class="close" id="close">×</button></div>
+    <div class="quiz-word" id="quizWord"></div>
+    <div class="quiz-hint" id="quizHint"></div>
+    <input class="quiz-answer" id="quizInput" placeholder="Type the answer/meaning...">
+    <div class="quiz-actions">
+      <button class="skip" id="skipBtn">Skip</button>
+      <button class="correct" id="showQuiz">Show Answer</button>
+    </div>
+    <div id="quizResult" style="margin-top:15px"></div>
+  </div>
+</div>
+
+<script>
+const words = [
+ {w:"Thief", a:"An act", c:"Actions"},
+ {w:"Learn", a:"An act", c:"Actions"},
+ {w:"Brake", a:"An act", c:"Actions"},
+ {w:"Ben", a:"Cartoon", c:"Cartoons"},
+ {w:"Bheem", a:"Cartoon", c:"Cartoons"},
+ {w:"Jaggu", a:"Cartoon", c:"Cartoons"},
+ {w:"Jerry", a:"Cartoon", c:"Cartoons"},
+ {w:"Globe", a:"Instrument", c:"Objects"},
+ {w:"Night", a:"Phenomena", c:"Nature"},
+ {w:"Ganga", a:"Water", c:"Nature"},
+ {w:"Idiom", a:"Dizzy", c:"Expressions"},
+ {w:"Fence", a:"Used in farm", c:"Daily Life"},
+ {w:"Bajaj", a:"Bike company", c:"Brands"},
+ {w:"Steps", a:"Life related", c:"Life"},
+ {w:"Shirt", a:"Life related", c:"Life"},
+ {w:"Cable", a:"Accessories", c:"Accessories"},
+ {w:"Money", a:"Daily supplies", c:"Daily Life"},
+ {w:"Table", a:"Home appliances", c:"Home"},
+ {w:"Board", a:"School", c:"Education"},
+ {w:"Label", a:"Life related", c:"Life"},
+ {w:"Quilt", a:"Bed linings", c:"Home"},
+ {w:"Pinch", a:"Daily supply", c:"Daily Life"},
+ {w:"Scrap", a:"Daily life", c:"Daily Life"},
+ {w:"Mario", a:"Game related", c:"Games"},
+ {w:"Flyer", a:"Paper advertisement", c:"Media"},
+ {w:"Moron", a:"Describe the state of a person", c:"Descriptions"},
+ {w:"Clove", a:"Aromatic flower buds of a tree", c:"Nature"},
+ {w:"Otter", a:"Carnivorous mammals in the sub", c:"Animals"},
+ {w:"Lotus", a:"A single-genus family of aquatic plants", c:"Nature"}
+];
+
+const grid=document.getElementById("grid"), search=document.getElementById("search");
+const filters=document.getElementById("filters"), sort=document.getElementById("sort");
+let active="All", revealed=new Set(), quizIndex=0;
+
+function categories(){return ["All",...new Set(words.map(x=>x.c))]}
+function renderFilters(){
+ filters.innerHTML=categories().map(c=>`<button class="chip ${c===active?'active':''}" onclick="setFilter('${c.replace(/'/g,"\\'")}')">${c}</button>`).join("");
+}
+function setFilter(c){active=c;renderFilters();render()}
+function getList(){
+ let q=search.value.toLowerCase().trim();
+ let arr=words.map((x,i)=>({...x,i})).filter(x=>(active==="All"||x.c===active)&&
+   (!q||x.w.toLowerCase().includes(q)||x.a.toLowerCase().includes(q)||x.c.toLowerCase().includes(q)));
+ if(sort.value==="az")arr.sort((a,b)=>a.w.localeCompare(b.w));
+ if(sort.value==="za")arr.sort((a,b)=>b.w.localeCompare(a.w));
+ return arr;
+}
+function render(){
+ const arr=getList();
+ grid.innerHTML=arr.length?arr.map(x=>`
+ <article class="card">
+  <div class="card-top"><span class="number">WORD #${x.i+1}</span><span class="badge">${x.c}</span></div>
+  <div class="word">${x.a}</div>
+  <div class="prompt">Find the word that matches this answer</div>
+  <div class="answer ${revealed.has(x.i)?'show':''}" id="ans-${x.i}"><b>Word:</b> ${x.w}</div>
+  <div class="card-bottom">
+   <button class="reveal" onclick="toggle(${x.i})">${revealed.has(x.i)?'Hide Word':'Reveal Word'}</button>
+   <button onclick="speak('${x.w.replace(/'/g,"\\'")}')">🔊 Listen</button>
+  </div>
+ </article>`).join(""):`<div class="empty"><div style="font-size:40px">🔎</div><h3>No words found</h3><p>Try another search or category.</p></div>`;
+ updateStats();
+}
+function toggle(i){
+ if(revealed.has(i))revealed.delete(i); else revealed.add(i);
+ render();
+}
+function updateStats(){
+ document.getElementById("totalStat").textContent=words.length;
+ document.getElementById("seenStat").textContent=revealed.size;
+ document.getElementById("remainingStat").textContent=words.length-revealed.size;
+ document.getElementById("progressText").textContent=`${revealed.size} / ${words.length}`;
+ document.getElementById("progress").style.width=(revealed.size/words.length*100)+"%";
+}
+function speak(t){ if("speechSynthesis" in window){speechSynthesis.cancel();speechSynthesis.speak(new SpeechSynthesisUtterance(t))}}
+search.addEventListener("input",render); sort.addEventListener("change",render);
+document.getElementById("resetBtn").onclick=()=>{revealed.clear();active="All";search.value="";sort.value="default";renderFilters();render()};
+renderFilters();render();
+
+const modal=document.getElementById("modal");
+function newQuiz(){
+ quizIndex=Math.floor(Math.random()*words.length);
+ document.getElementById("quizWord").textContent=words[quizIndex].w;
+ document.getElementById("quizHint").textContent="What is the answer/meaning associated with this word?";
+ document.getElementById("quizInput").value="";
+ document.getElementById("quizResult").innerHTML="";
+}
+document.getElementById("quizBtn").onclick=()=>{modal.classList.add("open");newQuiz()};
+document.getElementById("close").onclick=()=>modal.classList.remove("open");
+modal.addEventListener("click",e=>{if(e.target===modal)modal.classList.remove("open")});
+document.getElementById("skipBtn").onclick=newQuiz;
+document.getElementById("showQuiz").onclick=()=>{
+ const x=words[quizIndex];
+ document.getElementById("quizResult").innerHTML=`<div class="answer show"><b>Answer:</b> ${x.a}<br><small>Category: ${x.c}</small></div>`;
+ revealed.add(quizIndex);render();
+};
+document.getElementById("quizInput").addEventListener("keydown",e=>{
+ if(e.key==="Enter")document.getElementById("showQuiz").click();
+});
+</script>
+</body>
+</html>
